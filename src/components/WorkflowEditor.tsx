@@ -374,6 +374,20 @@ export const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
                 />
               </div>
 
+              {/* Clean Project */}
+              <div className="flex items-center justify-between p-3 bg-slate-950 rounded-lg border border-slate-800">
+                <div>
+                  <span className="text-xs font-medium text-amber-300 block">flutter clean (Clean Project)</span>
+                  <span className="text-[11px] text-slate-400">Cleans stale build cache & resolves Gradle daemon conflicts</span>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={config.runClean}
+                  onChange={(e) => onUpdateConfig(c => ({ ...c, runClean: e.target.checked }))}
+                  className="h-4 w-4 rounded bg-slate-900 border-slate-700 text-amber-500"
+                />
+              </div>
+
               <div className="flex items-center justify-between p-3 bg-slate-950 rounded-lg border border-slate-800">
                 <div>
                   <span className="text-xs font-medium text-slate-200 block">flutter analyze</span>
@@ -536,7 +550,7 @@ export const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
               <div className="flex items-center justify-between p-3 bg-slate-950 rounded-lg border border-slate-800">
                 <div>
                   <span className="text-xs font-medium text-slate-200 block">push: branches: [main]</span>
-                  <span className="text-[11px] text-slate-400">Triggers on every commit pushed to main</span>
+                  <span className="text-[11px] text-slate-400">Triggers when code pushed to main</span>
                 </div>
                 <input
                   type="checkbox"
@@ -548,13 +562,26 @@ export const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
 
               <div className="flex items-center justify-between p-3 bg-slate-950 rounded-lg border border-slate-800">
                 <div>
-                  <span className="text-xs font-medium text-slate-200 block">pull_request: branches: [main]</span>
+                  <span className="text-xs font-medium text-slate-200 block">push: branches: [master]</span>
+                  <span className="text-[11px] text-slate-400">Triggers when code pushed to master branch (Fixes ignored pushes!)</span>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={config.triggerPushMaster}
+                  onChange={(e) => onUpdateConfig(c => ({ ...c, triggerPushMaster: e.target.checked }))}
+                  className="h-4 w-4 rounded bg-slate-900 border-slate-700 text-indigo-500"
+                />
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-slate-950 rounded-lg border border-slate-800">
+                <div>
+                  <span className="text-xs font-medium text-slate-200 block">pull_request: branches: [main, master]</span>
                   <span className="text-[11px] text-slate-400">Validates build before merging pull requests</span>
                 </div>
                 <input
                   type="checkbox"
-                  checked={config.triggerPrMain}
-                  onChange={(e) => onUpdateConfig(c => ({ ...c, triggerPrMain: e.target.checked }))}
+                  checked={config.triggerPrMain || config.triggerPrMaster}
+                  onChange={(e) => onUpdateConfig(c => ({ ...c, triggerPrMain: e.target.checked, triggerPrMaster: e.target.checked }))}
                   className="h-4 w-4 rounded bg-slate-900 border-slate-700 text-indigo-500"
                 />
               </div>

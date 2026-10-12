@@ -13,7 +13,8 @@ import {
   Tag, 
   ArrowRight,
   Sparkles,
-  Zap
+  Zap,
+  RotateCcw
 } from 'lucide-react';
 import { WorkflowConfig } from '../types/workflow';
 
@@ -58,15 +59,15 @@ export const VisualPipelineGraph: React.FC<VisualPipelineGraphProps> = ({
             <span className="text-[10px] text-slate-500 font-mono">on:</span>
           </div>
           <div className="space-y-1 text-[11px]">
-            {config.triggerPushMain && (
+            {(config.triggerPushMain || config.triggerPushMaster) && (
               <div className="text-slate-300 flex items-center justify-between">
-                <span>push: main</span>
+                <span>push: {config.triggerPushMain && config.triggerPushMaster ? 'main, master' : config.triggerPushMain ? 'main' : 'master'}</span>
                 <span className="text-emerald-400 text-[10px]">✓</span>
               </div>
             )}
-            {config.triggerPrMain && (
+            {(config.triggerPrMain || config.triggerPrMaster) && (
               <div className="text-slate-300 flex items-center justify-between">
-                <span>pull_request: main</span>
+                <span>pr: {config.triggerPrMain && config.triggerPrMaster ? 'main, master' : config.triggerPrMain ? 'main' : 'master'}</span>
                 <span className="text-emerald-400 text-[10px]">✓</span>
               </div>
             )}
@@ -159,6 +160,20 @@ export const VisualPipelineGraph: React.FC<VisualPipelineGraphProps> = ({
             </div>
             <div className="text-[10px] text-slate-500 mt-0.5">~5 sec</div>
           </div>
+
+          {/* Step: Clean Project */}
+          {config.runClean && (
+            <div className="bg-slate-950/90 border border-slate-800 rounded-lg p-2.5 w-32 shadow-sm">
+              <div className="flex items-center gap-1.5 text-slate-300 font-medium mb-1">
+                <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
+                <span>Clean</span>
+              </div>
+              <div className="text-[10px] text-slate-400 font-mono truncate">
+                flutter clean
+              </div>
+              <div className="text-[10px] text-slate-500 mt-0.5">Reset cache</div>
+            </div>
+          )}
 
           {/* Optional: Analyze & Tests */}
           <button

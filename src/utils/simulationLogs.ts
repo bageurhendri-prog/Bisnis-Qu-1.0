@@ -43,8 +43,8 @@ export const SAMPLE_ARTIFACTS: ApkArtifact[] = [
 ];
 
 export const UNIVERSAL_ARTIFACT: ApkArtifact = {
-  fileName: 'bisnisqu-release.apk',
-  architecture: 'Universal (All ABIs bundled)',
+  fileName: 'app-release.apk',
+  architecture: 'Universal Release APK (All ABIs bundled)',
   sizeBytes: 58249112,
   sizeDisplay: '55.55 MB',
   sha256: '4b01e3899f36cd81267420eab45f6217e47a9821804bc63b89094e9f73a110cb',
@@ -177,6 +177,24 @@ export function buildSimulationSteps(config: WorkflowConfig): SimulationStep[] {
         { text: '+ path_provider 2.1.4', type: 'stdout', timestamp: '00:21' },
         { text: '+ shared_preferences 2.3.2', type: 'stdout', timestamp: '00:22' },
         { text: '42 packages total up to date.', type: 'success', timestamp: '00:22' }
+      ]
+    });
+  }
+
+  // Step: Clean Project (flutter clean)
+  if (config.runClean) {
+    steps.push({
+      id: 'flutter-clean',
+      name: 'Clean Project',
+      commandSnippet: 'flutter clean',
+      status: 'idle',
+      durationSeconds: 3,
+      logs: [
+        { text: '$ flutter clean', type: 'command', timestamp: '00:22' },
+        { text: 'Deleting "build/" directory...', type: 'info', timestamp: '00:23' },
+        { text: 'Deleting ".dart_tool/" directory...', type: 'info', timestamp: '00:23' },
+        { text: 'Cleaning stale Gradle build cache and locked daemon files...', type: 'info', timestamp: '00:24' },
+        { text: 'Project cleaned successfully.', type: 'success', timestamp: '00:25' }
       ]
     });
   }
@@ -320,12 +338,14 @@ export function buildSimulationSteps(config: WorkflowConfig): SimulationStep[] {
   // Upload artifacts
   const artifactPath = isAab
     ? 'build/app/outputs/bundle/release/*.aab'
+    : config.buildTarget === 'universal-apk'
+    ? 'build/app/outputs/flutter-apk/app-release.apk'
     : 'build/app/outputs/flutter-apk/*.apk';
 
   steps.push({
     id: 'upload-artifact',
-    name: 'Upload Artifacts',
-    commandSnippet: `actions/upload-artifact@${config.uploadArtifactVersion} (name: ${config.artifactName || 'release-apks'}, path: ${artifactPath})`,
+    name: 'Upload APK Artifact',
+    commandSnippet: `actions/upload-artifact@${config.uploadArtifactVersion} (name: ${config.artifactName || 'app-release'}, path: ${artifactPath})`,
     status: 'idle',
     durationSeconds: 4,
     logs: [

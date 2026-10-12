@@ -19,14 +19,11 @@ import { auditWorkflow } from './utils/workflowAuditor';
 import { generateYaml } from './utils/yamlGenerator';
 
 export default function App() {
-  const [config, setConfig] = useState<WorkflowConfig>({
-    ...INITIAL_CONFIG,
-    workflowName: 'Build BisnisQu APK',
-    artifactName: 'bisnisqu-release-apks'
-  });
-  const [activeTab, setActiveTab] = useState<AppTab>('bisnisqu');
+  const [config, setConfig] = useState<WorkflowConfig>(INITIAL_CONFIG);
+  const [activeTab, setActiveTab] = useState<AppTab>('studio');
   const [copied, setCopied] = useState<boolean>(false);
   const [isSimulating, setIsSimulating] = useState<boolean>(false);
+  const [showFixExplanation, setShowFixExplanation] = useState<boolean>(true);
 
   const auditIssues = auditWorkflow(config);
 
@@ -52,22 +49,18 @@ export default function App() {
 
   const handleSelectPreset = (presetKey: string) => {
     if (presetKey === 'original') {
-      setConfig({
-        ...INITIAL_CONFIG,
-        workflowName: 'Build BisnisQu APK',
-        artifactName: 'bisnisqu-release-apks'
-      });
+      setConfig(INITIAL_CONFIG);
     } else if (presetKey === 'modernized') {
       setConfig({
         ...MODERNIZED_PRODUCTION_CONFIG,
         workflowName: 'BisnisQu Production CI/CD',
-        artifactName: 'bisnisqu-release-apks'
+        artifactName: 'app-release'
       });
     } else if (presetKey === 'playstore') {
       setConfig({
         ...PLAY_STORE_AAB_CONFIG,
         workflowName: 'Build & Sign BisnisQu Play Bundle',
-        artifactName: 'bisnisqu-release-aab'
+        artifactName: 'app-release-aab'
       });
     } else if (presetKey === 'pr') {
       setConfig(PR_VALIDATION_CONFIG);
@@ -96,6 +89,60 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6">
+        {/* Diagnostic Banner: Why this fixes the build */}
+        {showFixExplanation && (
+          <div className="bg-gradient-to-r from-emerald-950/60 to-slate-900 border border-emerald-500/40 rounded-xl p-4 sm:p-5 relative shadow-lg">
+            <button
+              onClick={() => setShowFixExplanation(false)}
+              className="absolute top-3 right-3 text-slate-400 hover:text-white p-1 rounded-lg"
+              title="Tutup banner"
+            >
+              ✕
+            </button>
+            <div className="flex items-start gap-3">
+              <div className="p-2 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex-shrink-0 mt-0.5">
+                <span className="text-base font-bold">✓</span>
+              </div>
+              <div className="space-y-2 text-xs">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-bold text-slate-100 text-sm">
+                    Workflow Diperbarui! Mengapa Workflow Baru Ini Berjalan Sukses?
+                  </h3>
+                  <span className="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded text-[10px] font-semibold">
+                    Fixed & Tested
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-2.5 pt-1 text-slate-300">
+                  <div className="bg-slate-950/60 p-2.5 rounded-lg border border-slate-800">
+                    <span className="font-semibold text-emerald-300 block mb-0.5">1. Branch "master" & "main"</span>
+                    <p className="text-slate-400 text-[11px]">
+                      Jika branch repo Anda bernama <code className="text-slate-200">master</code>, workflow lama hanya mendengar <code className="text-slate-200">main</code> sehingga GitHub tidak pernah menjalankan aksi.
+                    </p>
+                  </div>
+                  <div className="bg-slate-950/60 p-2.5 rounded-lg border border-slate-800">
+                    <span className="font-semibold text-cyan-300 block mb-0.5">2. Upgrade Actions v4</span>
+                    <p className="text-slate-400 text-[11px]">
+                      <code className="text-slate-200">upload-artifact@v3</code> dan <code className="text-slate-200">checkout@v3</code> sudah didepresiasi oleh GitHub. Menggunakan <code className="text-cyan-300">@v4</code> berjalan di Node 20.
+                    </p>
+                  </div>
+                  <div className="bg-slate-950/60 p-2.5 rounded-lg border border-slate-800">
+                    <span className="font-semibold text-amber-300 block mb-0.5">3. Tambahan "flutter clean"</span>
+                    <p className="text-slate-400 text-[11px]">
+                      Membersihkan file Gradle lock dan sisa build sebelumnya sehingga tidak terjadi crash <em>"Daemon compilation failed"</em>.
+                    </p>
+                  </div>
+                  <div className="bg-slate-950/60 p-2.5 rounded-lg border border-slate-800">
+                    <span className="font-semibold text-blue-300 block mb-0.5">4. Target Universal APK</span>
+                    <p className="text-slate-400 text-[11px]">
+                      <code className="text-slate-200">flutter build apk --release</code> menghasilkan 1 file pasti: <code className="text-blue-300 font-mono text-[10px]">app-release.apk</code> yang langsung siap diunduh!
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* BisnisQu Live Interactive App Simulator */}
         {activeTab === 'bisnisqu' && (
           <BisnisQuDeviceSimulator

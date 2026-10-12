@@ -7,11 +7,17 @@ export function generateYaml(config: WorkflowConfig): string {
   lines.push('');
   lines.push('on:');
 
-  if (config.triggerPushMain || config.triggerTags) {
+  const pushBranches: string[] = [];
+  if (config.triggerPushMain) pushBranches.push('main');
+  if (config.triggerPushMaster) pushBranches.push('master');
+
+  if (pushBranches.length > 0 || config.triggerTags) {
     lines.push('  push:');
-    if (config.triggerPushMain) {
+    if (pushBranches.length === 1) {
       lines.push('    branches:');
-      lines.push('      - main');
+      lines.push(`      - ${pushBranches[0]}`);
+    } else if (pushBranches.length > 1) {
+      lines.push(`    branches: [ "main", "master" ]`);
     }
     if (config.triggerTags) {
       lines.push('    tags:');
@@ -19,10 +25,18 @@ export function generateYaml(config: WorkflowConfig): string {
     }
   }
 
-  if (config.triggerPrMain) {
+  const prBranches: string[] = [];
+  if (config.triggerPrMain) prBranches.push('main');
+  if (config.triggerPrMaster) prBranches.push('master');
+
+  if (prBranches.length > 0) {
     lines.push('  pull_request:');
-    lines.push('    branches:');
-    lines.push('      - main');
+    if (prBranches.length === 1) {
+      lines.push('    branches:');
+      lines.push(`      - ${prBranches[0]}`);
+    } else {
+      lines.push(`    branches: [ "main", "master" ]`);
+    }
   }
 
   if (config.triggerWorkflowDispatch) {
@@ -49,7 +63,7 @@ export function generateYaml(config: WorkflowConfig): string {
   lines.push('');
 
   // 2. Setup Java
-  lines.push(`      - name: Setup Java (JDK ${config.javaVersion})`);
+  lines.push(`      - name: Set up Java (JDK ${config.javaVersion})`);
   lines.push(`        uses: actions/setup-java@${config.setupJavaVersion}`);
   lines.push('        with:');
   lines.push(`          distribution: '${config.javaDistro}'`);
@@ -57,7 +71,7 @@ export function generateYaml(config: WorkflowConfig): string {
   lines.push('');
 
   // 3. Setup Flutter
-  lines.push('      - name: Setup Flutter');
+  lines.push('      - name: Set up Flutter');
   lines.push(`        uses: subosito/flutter-action@${config.flutterActionVersion}`);
   lines.push('        with:');
   lines.push(`          channel: '${config.flutterChannel}'`);
@@ -85,6 +99,13 @@ export function generateYaml(config: WorkflowConfig): string {
   if (config.runPubGet) {
     lines.push('      - name: Install Dependencies');
     lines.push('        run: flutter pub get');
+    lines.push('');
+  }
+
+  // 6. Clean Project (if enabled)
+  if (config.runClean) {
+    lines.push('      - name: Clean Project');
+    lines.push('        run: flutter clean');
     lines.push('');
   }
 
@@ -169,6 +190,10 @@ export function generateYaml(config: WorkflowConfig): string {
     lines.push('      - name: Build App Bundle (AAB)');
     lines.push(`        run: flutter build appbundle${flagStr.replace('--split-per-abi', '')}`);
     lines.push('');
+  } else if (config.buildTarget === 'universal-apk') {
+    lines.push('      - name: Build Release APK');
+    lines.push(`        run: flutter build apk --release${flagStr.replace('--release', '')}`);
+    lines.push('');
   } else {
     lines.push('      - name: Build APK (Release)');
     lines.push(`        run: flutter build apk${flagStr}`);
@@ -177,16 +202,18 @@ export function generateYaml(config: WorkflowConfig): string {
 
   // 11. Upload Artifacts
   let artifactPath = 'build/app/outputs/flutter-apk/*.apk';
-  if (config.buildTarget === 'appbundle') {
+  if (config.buildTarget === 'universal-apk') {
+    artifactPath = 'build/app/outputs/flutter-apk/app-release.apk';
+  } else if (config.buildTarget === 'appbundle') {
     artifactPath = 'build/app/outputs/bundle/release/*.aab';
   } else if (config.buildTarget === 'both-apk-aab') {
     artifactPath = 'build/app/outputs/**/*.*';
   }
 
-  lines.push('      - name: Upload Artifacts');
+  lines.push('      - name: Upload APK Artifact');
   lines.push(`        uses: actions/upload-artifact@${config.uploadArtifactVersion}`);
   lines.push('        with:');
-  lines.push(`          name: ${config.artifactName || 'release-apks'}`);
+  lines.push(`          name: ${config.artifactName || 'app-release'}`);
   lines.push(`          path: ${artifactPath}`);
   if (config.retentionDays && config.retentionDays !== 90) {
     lines.push(`          retention-days: ${config.retentionDays}`);

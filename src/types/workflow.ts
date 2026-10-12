@@ -3,7 +3,9 @@ export type BuildTarget = 'split-apk' | 'universal-apk' | 'appbundle' | 'both-ap
 export interface WorkflowConfig {
   workflowName: string;
   triggerPushMain: boolean;
+  triggerPushMaster: boolean;
   triggerPrMain: boolean;
+  triggerPrMaster: boolean;
   triggerTags: boolean;
   tagPattern: string;
   triggerWorkflowDispatch: boolean;
@@ -28,6 +30,7 @@ export interface WorkflowConfig {
   
   // Quality & Testing
   runPubGet: boolean;
+  runClean: boolean;
   runAnalyze: boolean;
   runTests: boolean;
   dartFormatCheck: boolean;
