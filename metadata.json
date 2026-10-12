@@ -1,0 +1,7 @@
+{
+  "name": "FlutterFlow CI - GitHub Actions Workflow Studio",
+  "description": "Inspect, customize, validate, modernize, and simulate Flutter GitHub Actions CI/CD workflows for release APKs and App Bundles.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
