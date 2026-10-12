@@ -108,6 +108,24 @@ export function buildSimulationSteps(config: WorkflowConfig): SimulationStep[] {
     ]
   });
 
+  // Step 2.5: Locate Project Root (fixes "Expected to find project root in current working directory")
+  if (config.autoDetectProjectDir) {
+    steps.push({
+      id: 'locate-project',
+      name: 'Locate Flutter Project Root',
+      commandSnippet: 'Checking pubspec.yaml directory...',
+      status: 'idle',
+      durationSeconds: 1,
+      logs: [
+        { text: 'Checking for pubspec.yaml in repository root...', type: 'info', timestamp: '00:05' },
+        { text: 'Scanning repository structure for Flutter project...', type: 'info', timestamp: '00:05' },
+        { text: 'Found pubspec.yaml in: . (or subfolder)', type: 'success', timestamp: '00:06' },
+        { text: 'Exported project_path to $GITHUB_ENV', type: 'command', timestamp: '00:06' },
+        { text: 'Working directory configured successfully.', type: 'success', timestamp: '00:06' }
+      ]
+    });
+  }
+
   // Step 3: Setup Java
   steps.push({
     id: 'setup-java',

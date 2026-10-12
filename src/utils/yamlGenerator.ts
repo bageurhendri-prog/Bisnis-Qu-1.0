@@ -62,6 +62,27 @@ export function generateYaml(config: WorkflowConfig): string {
   lines.push(`        uses: actions/checkout@${config.checkoutVersion}`);
   lines.push('');
 
+  // 1.1 Locate Project Root (fixes "Expected to find project root in current working directory")
+  if (config.autoDetectProjectDir) {
+    lines.push('      - name: Locate Flutter Project Root');
+    lines.push('        id: locate-project');
+    lines.push('        run: |');
+    lines.push('          if [ -f "pubspec.yaml" ]; then');
+    lines.push('            echo "project_path=." >> $GITHUB_ENV');
+    lines.push('            echo "Project root found at repository root."');
+    lines.push('          else');
+    lines.push('            FOUND_DIR=$(find . -not -path \'*/.*\' -name "pubspec.yaml" -exec dirname {} \\; | head -n 1)');
+    lines.push('            if [ -n "$FOUND_DIR" ]; then');
+    lines.push('              echo "project_path=$FOUND_DIR" >> $GITHUB_ENV');
+    lines.push('              echo "Project root found in subdirectory: $FOUND_DIR"');
+    lines.push('            else');
+    lines.push('              echo "ERROR: Could not find pubspec.yaml in repository!"');
+    lines.push('              exit 1');
+    lines.push('            fi');
+    lines.push('          fi');
+    lines.push('');
+  }
+
   // 2. Setup Java
   lines.push(`      - name: Set up Java (JDK ${config.javaVersion})`);
   lines.push(`        uses: actions/setup-java@${config.setupJavaVersion}`);
@@ -95,9 +116,16 @@ export function generateYaml(config: WorkflowConfig): string {
     lines.push('');
   }
 
+  const workDirLine = config.autoDetectProjectDir 
+    ? '        working-directory: ${{ env.project_path }}\n' 
+    : config.workingDirectory 
+    ? `        working-directory: ${config.workingDirectory}\n` 
+    : '';
+
   // 5. Install Dependencies
   if (config.runPubGet) {
     lines.push('      - name: Install Dependencies');
+    if (workDirLine) lines.push(workDirLine.trimEnd());
     lines.push('        run: flutter pub get');
     lines.push('');
   }
@@ -105,6 +133,7 @@ export function generateYaml(config: WorkflowConfig): string {
   // 6. Clean Project (if enabled)
   if (config.runClean) {
     lines.push('      - name: Clean Project');
+    if (workDirLine) lines.push(workDirLine.trimEnd());
     lines.push('        run: flutter clean');
     lines.push('');
   }
@@ -112,6 +141,7 @@ export function generateYaml(config: WorkflowConfig): string {
   // 6. Dart format check
   if (config.dartFormatCheck) {
     lines.push('      - name: Verify Code Formatting');
+    if (workDirLine) lines.push(workDirLine.trimEnd());
     lines.push('        run: dart format --output=none --set-exit-if-changed .');
     lines.push('');
   }
@@ -119,6 +149,7 @@ export function generateYaml(config: WorkflowConfig): string {
   // 7. Flutter Analyze
   if (config.runAnalyze) {
     lines.push('      - name: Analyze Project Code');
+    if (workDirLine) lines.push(workDirLine.trimEnd());
     lines.push('        run: flutter analyze');
     lines.push('');
   }
@@ -126,6 +157,7 @@ export function generateYaml(config: WorkflowConfig): string {
   // 8. Flutter Test
   if (config.runTests) {
     lines.push('      - name: Run Unit & Widget Tests');
+    if (workDirLine) lines.push(workDirLine.trimEnd());
     lines.push('        run: flutter test');
     lines.push('');
   }
@@ -133,6 +165,7 @@ export function generateYaml(config: WorkflowConfig): string {
   // 9. Android Keystore Signing
   if (config.enableKeystoreSigning) {
     lines.push('      - name: Setup Android Keystore');
+    if (workDirLine) lines.push(workDirLine.trimEnd());
     lines.push('        env:');
     lines.push(`          KEYSTORE_BASE64: \${{ secrets.${config.keystoreSecretName} }}`);
     lines.push(`          KEYSTORE_PASSWORD: \${{ secrets.${config.keystorePasswordSecret} }}`);
@@ -181,33 +214,42 @@ export function generateYaml(config: WorkflowConfig): string {
 
   if (config.buildTarget === 'appbundle') {
     lines.push('      - name: Build App Bundle (AAB)');
+    if (workDirLine) lines.push(workDirLine.trimEnd());
     lines.push(`        run: flutter build appbundle${flagStr}`);
     lines.push('');
   } else if (config.buildTarget === 'both-apk-aab') {
     lines.push('      - name: Build APK (Split ABI)');
+    if (workDirLine) lines.push(workDirLine.trimEnd());
     lines.push(`        run: flutter build apk --split-per-abi${flagStr.replace('--split-per-abi', '')}`);
     lines.push('');
     lines.push('      - name: Build App Bundle (AAB)');
+    if (workDirLine) lines.push(workDirLine.trimEnd());
     lines.push(`        run: flutter build appbundle${flagStr.replace('--split-per-abi', '')}`);
     lines.push('');
   } else if (config.buildTarget === 'universal-apk') {
     lines.push('      - name: Build Release APK');
+    if (workDirLine) lines.push(workDirLine.trimEnd());
     lines.push(`        run: flutter build apk --release${flagStr.replace('--release', '')}`);
     lines.push('');
   } else {
     lines.push('      - name: Build APK (Release)');
+    if (workDirLine) lines.push(workDirLine.trimEnd());
     lines.push(`        run: flutter build apk${flagStr}`);
     lines.push('');
   }
 
   // 11. Upload Artifacts
-  let artifactPath = 'build/app/outputs/flutter-apk/*.apk';
-  if (config.buildTarget === 'universal-apk') {
-    artifactPath = 'build/app/outputs/flutter-apk/app-release.apk';
-  } else if (config.buildTarget === 'appbundle') {
-    artifactPath = 'build/app/outputs/bundle/release/*.aab';
+  const pathPrefix = config.autoDetectProjectDir 
+    ? '${{ env.project_path }}/' 
+    : config.workingDirectory 
+    ? `${config.workingDirectory}/` 
+    : '';
+
+  let artifactPath = `${pathPrefix}build/app/outputs/flutter-apk/*.apk`;
+  if (config.buildTarget === 'appbundle') {
+    artifactPath = `${pathPrefix}build/app/outputs/bundle/release/*.aab`;
   } else if (config.buildTarget === 'both-apk-aab') {
-    artifactPath = 'build/app/outputs/**/*.*';
+    artifactPath = `${pathPrefix}build/app/outputs/**/*.*`;
   }
 
   lines.push('      - name: Upload APK Artifact');

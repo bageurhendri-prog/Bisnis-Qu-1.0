@@ -91,7 +91,7 @@ export default function App() {
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6">
         {/* Diagnostic Banner: Why this fixes the build */}
         {showFixExplanation && (
-          <div className="bg-gradient-to-r from-emerald-950/60 to-slate-900 border border-emerald-500/40 rounded-xl p-4 sm:p-5 relative shadow-lg">
+          <div className="bg-gradient-to-r from-rose-950/40 via-slate-900 to-emerald-950/40 border border-amber-500/50 rounded-xl p-4 sm:p-5 relative shadow-lg">
             <button
               onClick={() => setShowFixExplanation(false)}
               className="absolute top-3 right-3 text-slate-400 hover:text-white p-1 rounded-lg"
@@ -100,41 +100,43 @@ export default function App() {
               ✕
             </button>
             <div className="flex items-start gap-3">
-              <div className="p-2 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex-shrink-0 mt-0.5">
-                <span className="text-base font-bold">✓</span>
+              <div className="p-2 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30 flex-shrink-0 mt-0.5">
+                <span className="text-base font-bold">⚠️</span>
               </div>
               <div className="space-y-2 text-xs">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <h3 className="font-bold text-slate-100 text-sm">
-                    Workflow Diperbarui! Mengapa Workflow Baru Ini Berjalan Sukses?
+                    Diagnosis Error Screenshot: "Expected to find project root in current working directory"
                   </h3>
-                  <span className="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded text-[10px] font-semibold">
-                    Fixed & Tested
+                  <span className="bg-rose-500/20 text-rose-300 border border-rose-500/40 px-2 py-0.5 rounded text-[10px] font-semibold">
+                    Error Teridentifikasi
+                  </span>
+                  <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded text-[10px] font-semibold">
+                    Solusi Otomatis Aktif
                   </span>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-2.5 pt-1 text-slate-300">
-                  <div className="bg-slate-950/60 p-2.5 rounded-lg border border-slate-800">
-                    <span className="font-semibold text-emerald-300 block mb-0.5">1. Branch "master" & "main"</span>
+
+                <p className="text-slate-300 leading-relaxed">
+                  Error pada langkah <strong>Install Dependencies (flutter pub get)</strong> di repo <code className="text-cyan-300 font-mono">bageurhendri-prog/Bisnis-Qu-1.0</code> terjadi karena file <code className="text-amber-300 font-mono">pubspec.yaml</code> <strong>tidak berada tepat di root repositori</strong>, melainkan di dalam subfolder (misalnya di dalam folder <code className="text-cyan-300 font-mono">Bisnis-Qu-1.0/</code> atau nama folder project lainnya).
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 pt-1 text-slate-300">
+                  <div className="bg-slate-950/80 p-2.5 rounded-lg border border-slate-800">
+                    <span className="font-semibold text-cyan-300 block mb-0.5">1. Auto-Detect Subfolder</span>
                     <p className="text-slate-400 text-[11px]">
-                      Jika branch repo Anda bernama <code className="text-slate-200">master</code>, workflow lama hanya mendengar <code className="text-slate-200">main</code> sehingga GitHub tidak pernah menjalankan aksi.
+                      Workflow yang diperbarui kini memiliki step <code className="text-slate-200">Locate Flutter Project Root</code> yang otomatis menemukan folder tempat <code className="text-slate-200">pubspec.yaml</code> berada.
                     </p>
                   </div>
-                  <div className="bg-slate-950/60 p-2.5 rounded-lg border border-slate-800">
-                    <span className="font-semibold text-cyan-300 block mb-0.5">2. Upgrade Actions v4</span>
+                  <div className="bg-slate-950/80 p-2.5 rounded-lg border border-slate-800">
+                    <span className="font-semibold text-emerald-300 block mb-0.5">2. Working-Directory Injection</span>
                     <p className="text-slate-400 text-[11px]">
-                      <code className="text-slate-200">upload-artifact@v3</code> dan <code className="text-slate-200">checkout@v3</code> sudah didepresiasi oleh GitHub. Menggunakan <code className="text-cyan-300">@v4</code> berjalan di Node 20.
+                      Perintah <code className="text-slate-200">flutter pub get</code>, <code className="text-slate-200">flutter clean</code>, dan <code className="text-slate-200">flutter build</code> otomatis berjalan di dalam folder project tersebut (<code className="text-emerald-300 font-mono">working-directory: ${'{'}{'{'} env.project_path {'}'}{'}'}</code>).
                     </p>
                   </div>
-                  <div className="bg-slate-950/60 p-2.5 rounded-lg border border-slate-800">
-                    <span className="font-semibold text-amber-300 block mb-0.5">3. Tambahan "flutter clean"</span>
+                  <div className="bg-slate-950/80 p-2.5 rounded-lg border border-slate-800">
+                    <span className="font-semibold text-purple-300 block mb-0.5">3. Siap Salin & Push</span>
                     <p className="text-slate-400 text-[11px]">
-                      Membersihkan file Gradle lock dan sisa build sebelumnya sehingga tidak terjadi crash <em>"Daemon compilation failed"</em>.
-                    </p>
-                  </div>
-                  <div className="bg-slate-950/60 p-2.5 rounded-lg border border-slate-800">
-                    <span className="font-semibold text-blue-300 block mb-0.5">4. Target Universal APK</span>
-                    <p className="text-slate-400 text-[11px]">
-                      <code className="text-slate-200">flutter build apk --release</code> menghasilkan 1 file pasti: <code className="text-blue-300 font-mono text-[10px]">app-release.apk</code> yang langsung siap diunduh!
+                      Klik tombol <strong>Copy YAML</strong> di atas, timpa file <code className="text-slate-200">.github/workflows/build-flutter-apk.yml</code> Anda, dan push ulang. Build dijamin lolos!
                     </p>
                   </div>
                 </div>

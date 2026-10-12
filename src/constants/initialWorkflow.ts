@@ -16,6 +16,23 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Locate Flutter Project Root
+        id: locate-project
+        run: |
+          if [ -f "pubspec.yaml" ]; then
+            echo "project_path=." >> $GITHUB_ENV
+            echo "Project root found at repository root."
+          else
+            FOUND_DIR=$(find . -not -path '*/.*' -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
+            if [ -n "$FOUND_DIR" ]; then
+              echo "project_path=$FOUND_DIR" >> $GITHUB_ENV
+              echo "Project root found in subdirectory: $FOUND_DIR"
+            else
+              echo "ERROR: Could not find pubspec.yaml in repository!"
+              exit 1
+            fi
+          fi
+
       - name: Set up Java (JDK 17)
         uses: actions/setup-java@v4
         with:
@@ -29,19 +46,22 @@ jobs:
           cache: true
 
       - name: Install Dependencies
+        working-directory: \${{ env.project_path }}
         run: flutter pub get
 
       - name: Clean Project
+        working-directory: \${{ env.project_path }}
         run: flutter clean
 
       - name: Build Release APK
+        working-directory: \${{ env.project_path }}
         run: flutter build apk --release
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-release
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: \${{ env.project_path }}/build/app/outputs/flutter-apk/*.apk
 `;
 
 export const INITIAL_CONFIG: WorkflowConfig = {
@@ -74,6 +94,10 @@ export const INITIAL_CONFIG: WorkflowConfig = {
   runAnalyze: false,
   runTests: false,
   dartFormatCheck: false,
+
+  // Project directory auto-detection to fix "Expected to find project root in current working directory"
+  autoDetectProjectDir: true,
+  workingDirectory: '',
 
   buildTarget: 'universal-apk',
   buildMode: 'release',

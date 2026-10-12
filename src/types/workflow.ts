@@ -34,6 +34,10 @@ export interface WorkflowConfig {
   runAnalyze: boolean;
   runTests: boolean;
   dartFormatCheck: boolean;
+
+  // Project Location & Subfolder
+  autoDetectProjectDir: boolean;
+  workingDirectory: string;
   
   // Build
   buildTarget: BuildTarget;
